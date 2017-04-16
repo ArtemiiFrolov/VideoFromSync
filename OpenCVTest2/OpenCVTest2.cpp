@@ -2,74 +2,62 @@
 //
 
 #include "stdafx.h"
-
+#include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 
 using namespace cv;
 using namespace std;
-IplImage* frame = 0;
-IplImage* dst = 0;
-//IplImage* dst2 = 0;
+
 double maxVal = 0;
 double minVal = 0;
 int e_slider;
 int e_slidermax;
-Mat dstM;
+//Mat dstM;
 void on_trackbar(int, void*) {
 
 }
 
 int main(int argc, const char** argv)
 {
-	// имя файла задаётся первым параметром
-	char* filename = argc == 2 ? argv[1] : "test.mp4";
-
-	printf("[i] file: %s\n", filename);
-	// окно для отображения картинки
-	cvNamedWindow("original", CV_WINDOW_AUTOSIZE);
-	cvNamedWindow("threshold", CV_WINDOW_AUTOSIZE);
-	// получаем информацию о видео-файле
-	CvCapture* capture = cvCreateFileCapture(filename);
+	namedWindow("original", 1);
+	namedWindow("threshold", 1);
+	VideoCapture cap("test.mp4");
+	Mat frame;
+	Mat dst;
 	//trackbar
 	e_slider = 0;
 	e_slidermax = 50;
 	createTrackbar("Epsilon", "threshold", &e_slider, e_slidermax, on_trackbar);
-	while (1) {
-		// получаем следующий кадр
-		frame = cvQueryFrame(capture);
-		if (!frame) {
+	for (;;)
+	{
+		cap >> frame;
+		if (frame.empty()) 
+		{
 			break;
 		}
-
-		
-		dst = cvCloneImage(frame);
-		dstM = cvarrToMat(dst);
+		dst = frame.clone();
 		//избавляемся от совсем шумного шума
-
-		/*minMaxLoc(dstM, &minVal, &maxVal);
-		cvThreshold(dst, dst, maxVal-5, maxVal-5, 2);*/
+		/*minMaxLoc(dst, &minVal, &maxVal);
+		threshold(dst, dst, maxVal-5, maxVal-5, 2);*/
 
 		//размываем изображение (тут чтобы избавиться от шума нужна большая фильтрация)
-		cvSmooth(dst, dst, CV_GAUSSIAN, 5, 5);
-		dstM = cvarrToMat(dst);
-		minMaxLoc(dstM, &minVal, &maxVal);
-		cvThreshold(dst, dst, maxVal-e_slider, maxVal, 3);
-	//	Canny
-		// показываем кадр
-		cvShowImage("original", frame);
-		cvShowImage("threshold", dst);
+		GaussianBlur(dst, dst, Size(5, 5),0,0);
+		//ищем яркие пиксели
+		minMaxLoc(dst, &minVal, &maxVal);
+		threshold(dst, dst, maxVal - e_slider, maxVal, 3);
+		//Canny
+
+
+		//показываем кадр
+		imshow("original", frame);
+		imshow("threshold", dst);
 		char c = cvWaitKey(33);
-		if (c == 27) { // если нажата ESC - выходим
+		if (c == 27) { 
 			break;
 		}
 	}
 
-	// освобождаем ресурсы
-	cvReleaseCapture(&capture);
-	// удаляем окно
-	cvDestroyWindow("original");
-	cvDestroyWindow("threshold");
 	return 0;
 }
