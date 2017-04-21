@@ -35,7 +35,7 @@ int main(int argc, const char** argv)
 	//namedWindow("original", 1);
 	//namedWindow("threshold", 1);
 	namedWindow("output",1);
-	VideoCapture cap("Test2.mp4");
+	VideoCapture cap("Test.mp4");
 	
 	cap >> frame;
 	//trackbar
@@ -86,6 +86,7 @@ int main(int argc, const char** argv)
 			int firstRow = 0;
 			int lastRow = 0;
 			int maxRow = 0;
+			int maxRowI = 0;
 			bool flagFirst = true;
 			bool flagLast = false;
 			cvtColor(dst, dst2, COLOR_RGB2GRAY);
@@ -112,6 +113,7 @@ int main(int argc, const char** argv)
 					if (avgRow[i] > maxRow)
 					{
 						maxRow = avgRow[i];
+						maxRowI = i;
 					}
 					flagLast = true;
 					
@@ -130,7 +132,7 @@ int main(int argc, const char** argv)
 				line(graphic, Point(0, i), Point(avgRow[i] * 2, i), Scalar(0, 55, 255), 1, 8, 0);
 			}
 			line(graphic, Point(0, (lastRow + firstRow) / 2), Point(255, (lastRow + firstRow) / 2), Scalar(55, 255, 0), 1, 8, 0);
-			line(graphic, Point(0, maxRow), Point(255, maxRow), Scalar(255, 55, 0), 1, 8, 0);
+			line(graphic, Point(0, maxRowI), Point(255, maxRowI), Scalar(255, 55, 0), 1, 8, 0);
 			
 			delete[]avgRow;
 		}
