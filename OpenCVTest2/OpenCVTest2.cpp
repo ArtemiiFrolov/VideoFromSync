@@ -12,12 +12,20 @@
 using namespace cv;
 using namespace std;
 
+const int epsOver = 250;
+const int epsMax = 1;
+
 double maxVal = 0;
 double minVal = 0;
 int e_slider, e_slidermax, x_slider, x_slidermax, y_slider, y_slidermax, a_slider, a_slidermax;
 int savedX = 0;
 int savedY = 0;
 int countMax = 0;
+int avgMax = 0;
+int frameCounter=0;
+int countOver = 0;
+int avgOver = 0;
+
 
 Mat frame;
 Mat dst;
@@ -62,6 +70,7 @@ int main(int argc, const char** argv)
 			break;
 		}
 		//cvtColor(frame, dst, COLOR_RGB2GRAY);
+		frameCounter++;
 		dst = frame.clone();
 		int x2 = x_slider + a_slider;
 		int y2 = y_slider + a_slider;
@@ -90,7 +99,7 @@ int main(int argc, const char** argv)
 			int maxRow2 = 0;
 			int maxRowI = 0;
 			int maxRowI2 = 0;
-			countMax = 0;
+			
 			bool flagFirst = true;
 			bool flagLast = false;
 			cvtColor(dst, dst2, COLOR_RGB2GRAY);
@@ -103,12 +112,15 @@ int main(int argc, const char** argv)
 					Scalar intensity = dst2.at<uchar>(i, j);
 					if (intensity.val[0] > 0) {
 						avgX += intensity.val[0];
-						if (intensity.val[0] == maxVal){
+						if (intensity.val[0]+epsMax>= maxVal){
 							Vec3b & color = dst.at<Vec3b>(i, j);
 							color[1] = 255;
 							color[2] = 255;
 							color[0] = 0;
 							countMax++;
+						}
+						if (intensity.val[0] > epsOver){
+							countOver++;
 						}
 						avgN++;
 					}
@@ -147,7 +159,7 @@ int main(int argc, const char** argv)
 			{
 				lastRow = a_slider;
 			}
-			graphic = Mat::zeros(dst.rows, 255, CV_8UC3);
+			graphic = Mat::zeros(dst.rows, 256, CV_8UC3);
 			for (int i = 0; i < dst.rows; i++) {
 				line(graphic, Point(0, i), Point(avgRow[i], i), Scalar(0, 55, 255), 1, 8, 0);
 			}
@@ -156,7 +168,7 @@ int main(int argc, const char** argv)
 			} 
 			line(graphic, Point(0, (lastRow + firstRow) / 2), Point(255, (lastRow + firstRow) / 2), Scalar(55, 255, 0), 1, 8, 0);
 			line(graphic, Point(0, maxRowI), Point(255, maxRowI), Scalar(255, 55, 0), 1, 8, 0);
-			
+			line(graphic, Point(epsOver, 0), Point(epsOver, a_slider), Scalar(0, 255, 255), 1, 8, 0);
 			delete[]avgRow;
 		}
 
@@ -179,10 +191,16 @@ int main(int argc, const char** argv)
 		frame.copyTo(help1);
 		dst.copyTo(help2);
 		graphic.copyTo(help3);
-
 		
-		putText(output, to_string(countMax), cvPoint(s.width+10, a_slider+10),	FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250), 1, CV_AA);
-		
+		if (frameCounter == 30){
+			frameCounter = 0;
+			avgMax = countMax / 30;
+			countMax = 0;
+			avgOver = countOver / 30;
+			countOver = 0;			
+		}
+		putText(output, to_string(avgMax), cvPoint(s.width+10, a_slider+10),	FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200, 200, 250), 1, CV_AA);
+		putText(output, to_string(avgOver), cvPoint(s.width + 10, a_slider + 40), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0, 250, 250), 1, CV_AA);
 
 		//показываем кадр
 		//imshow("original", frame);
